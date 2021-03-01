@@ -13,6 +13,8 @@ queue_t *q_new()
 {
     queue_t *q = malloc(sizeof(queue_t));
     /* TODO: What if malloc returned NULL? */
+    if (!q)
+        return NULL;
     q->head = NULL;
     return q;
 }
@@ -34,11 +36,36 @@ void q_free(queue_t *q)
  */
 bool q_insert_head(queue_t *q, char *s)
 {
-    list_ele_t *newh;
-    /* TODO: What should you do if the q is NULL? */
-    newh = malloc(sizeof(list_ele_t));
-    /* Don't forget to allocate space for the string and copy it */
-    /* What if either call to malloc returns NULL? */
+    /* Case 1: Queue hasn't been created yet */
+    /* Return false directly */
+    if (!q)
+        return false;
+    /* Allocate a element pointer `newh` */
+    list_ele_t *newh = malloc(sizeof(list_ele_t));
+    /* Case 2: newh can't be allocated successfully */
+    /* Return false directly */
+    if (!newh)
+        return false;
+    /* Count length of `s` */
+    char *srcIndex = s;
+    while (*srcIndex)
+        srcIndex++;
+    /* Make space for length of s plus one `\0` space */
+    newh->value = malloc((srcIndex - s + 1) * sizeof(char));
+    /* Case 3: newh->value can't be allocated successfully */
+    /* free newh and return false */
+    if (!newh->value) {
+        free(newh);
+        return false;
+    }
+    srcIndex = s;
+    char *dstIndex = newh->value;
+    while (*srcIndex) {
+        *dstIndex = *srcIndex;
+        dstIndex++;
+        srcIndex++;
+    }
+    *dstIndex = 0;
     newh->next = q->head;
     q->head = newh;
     return true;
@@ -56,7 +83,8 @@ bool q_insert_tail(queue_t *q, char *s)
     /* TODO: You need to write the complete code for this function */
     /* Remember: It should operate in O(1) time */
     /* TODO: Remove the above comment when you are about to implement. */
-    return false;
+    bool a = false;
+    return a;
 }
 
 /*
@@ -69,9 +97,22 @@ bool q_insert_tail(queue_t *q, char *s)
  */
 bool q_remove_head(queue_t *q, char *sp, size_t bufsize)
 {
-    /* TODO: You need to fix up this code. */
     /* TODO: Remove the above comment when you are about to implement. */
+    if (!q || !q->head)
+        return false;
+    if (sp) {
+        char *srcIndex = q->head->value, *dstBound = sp + bufsize - 1;
+        while (*srcIndex && sp < dstBound) {
+            *sp = *srcIndex;
+            sp++;
+            srcIndex++;
+        }
+        *sp = '\0';
+    }
+    free(q->head->value);
+    list_ele_t *nodeToRemove = q->head;
     q->head = q->head->next;
+    free(nodeToRemove);
     return true;
 }
 
