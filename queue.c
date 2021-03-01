@@ -65,11 +65,11 @@ bool q_insert_head(queue_t *q, char *s)
     if (!newh)
         return false;
     /* Count length of `s` */
-    char *srcIndex = s;
-    while (*srcIndex)
-        srcIndex++;
+    char *srcPtr = s;
+    while (*srcPtr)
+        srcPtr++;
     /* Make space for length of s plus one `\0` space */
-    newh->value = malloc((srcIndex - s + 1) * sizeof(char));
+    newh->value = malloc((srcPtr - s + 1) * sizeof(char));
     /* Case 3: newh->value can't be allocated successfully */
     /* Free newh and return false */
     if (!newh->value) {
@@ -77,16 +77,16 @@ bool q_insert_head(queue_t *q, char *s)
         return false;
     }
     /* Get beginning of source string and destination string */
-    srcIndex = s;
-    char *dstIndex = newh->value;
+    srcPtr = s;
+    char *dstPtr = newh->value;
     /* Copy until terminating character and append a terminating charater at the
         end of destination string*/
-    while (*srcIndex) {
-        *dstIndex = *srcIndex;
-        dstIndex++;
-        srcIndex++;
+    while (*srcPtr) {
+        *dstPtr = *srcPtr;
+        dstPtr++;
+        srcPtr++;
     }
-    *dstIndex = 0;
+    *dstPtr = 0;
     /* Adjust connection of the linked list */
     newh->next = q->head;
     q->head = newh;
@@ -118,11 +118,11 @@ bool q_insert_tail(queue_t *q, char *s)
     if (!newt)
         return false;
     /* Count length of `s` */
-    char *srcIndex = s;
-    while (*srcIndex)
-        srcIndex++;
+    char *srcPtr = s;
+    while (*srcPtr)
+        srcPtr++;
     /* Make space for length of s plus one `\0` space */
-    newt->value = malloc((srcIndex - s + 1) * sizeof(char));
+    newt->value = malloc((srcPtr - s + 1) * sizeof(char));
     /* Case 3: newt->value can't be allocated successfully */
     /* Free newt and return false */
     if (!newt->value) {
@@ -130,16 +130,16 @@ bool q_insert_tail(queue_t *q, char *s)
         return false;
     }
     /* Get beginning of source string and destination string */
-    srcIndex = s;
-    char *dstIndex = newt->value;
+    srcPtr = s;
+    char *dstPtr = newt->value;
     /* Copy until terminating character and append a terminating charater at the
         end of destination string*/
-    while (*srcIndex) {
-        *dstIndex = *srcIndex;
-        dstIndex++;
-        srcIndex++;
+    while (*srcPtr) {
+        *dstPtr = *srcPtr;
+        dstPtr++;
+        srcPtr++;
     }
-    *dstIndex = 0;
+    *dstPtr = 0;
     /* Adjust connection of the liked list */
     if (!q->head) {
         q->head = newt;
@@ -170,11 +170,11 @@ bool q_remove_head(queue_t *q, char *sp, size_t bufsize)
     /* Copy q->head->value to sp up to bufsize - 1 or end of q->head->value,
         and append a terminating character at the end of sp */
     if (sp) {
-        char *srcIndex = q->head->value, *dstBound = sp + bufsize - 1;
-        while (*srcIndex && sp < dstBound) {
-            *sp = *srcIndex;
+        char *srcPtr = q->head->value, *dstBound = sp + bufsize - 1;
+        while (*srcPtr && sp < dstBound) {
+            *sp = *srcPtr;
             sp++;
-            srcIndex++;
+            srcPtr++;
         }
         *sp = 0;
     }
@@ -198,9 +198,11 @@ bool q_remove_head(queue_t *q, char *sp, size_t bufsize)
  */
 int q_size(queue_t *q)
 {
-    /* TODO: You need to write the code for this function */
-    /* Remember: It should operate in O(1) time */
-    /* TODO: Remove the above comment when you are about to implement. */
+    /* If value of q is NULL */
+    /* Return 0 */
+    if (!q)
+        return 0;
+    /* Return size stored in q */
     return q->size;
 }
 
@@ -213,8 +215,28 @@ int q_size(queue_t *q)
  */
 void q_reverse(queue_t *q)
 {
-    /* TODO: You need to write the code for this function */
-    /* TODO: Remove the above comment when you are about to implement. */
+    /* If value of q is NULL */
+    /* Return immediately without any operation */
+    if (!q || q->size < 2)
+        return;
+    /* Get prevPtr as NULL, original head to `opPtr`
+        and utilize `tmpPtr` to swap head and tail */
+    list_ele_t *prevPtr = NULL, *opPtr = q->head, *tmpPtr = q->head;
+    q->head = q->tail;
+    q->tail = tmpPtr;
+
+    /* Now iterate from new tail (original head) to new head */
+    while (prevPtr != q->head) {
+        /* prevPtr, opPtr, tmpPtr store previous, current and next elements as
+            a sliding window.
+            ...| |->| |->| |...
+            prev↑    ↑    ↑tmpPtr
+                     └opPtr */
+        tmpPtr = opPtr->next;
+        opPtr->next = prevPtr;
+        prevPtr = opPtr;
+        opPtr = tmpPtr;
+    }
 }
 
 /*
@@ -224,6 +246,6 @@ void q_reverse(queue_t *q)
  */
 void q_sort(queue_t *q)
 {
-    /* TODO: You need to write the code for this function */
-    /* TODO: Remove the above comment when you are about to implement. */
+    if (!q || q->size < 2)
+        return;
 }
