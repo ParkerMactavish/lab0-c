@@ -11,19 +11,37 @@
  */
 queue_t *q_new()
 {
+    /* Allocate a memory with size of queue_t */
     queue_t *q = malloc(sizeof(queue_t));
-    /* TODO: What if malloc returned NULL? */
+    /* If allocation is not successful */
+    /* Return NULL pointer */
     if (!q)
         return NULL;
+    /* Initialize data member and return pointer to this queue_t */
     q->head = NULL;
+    q->tail = NULL;
+    q->size = 0;
     return q;
 }
 
 /* Free all storage used by queue */
 void q_free(queue_t *q)
 {
-    /* TODO: How about freeing the list elements and the strings? */
-    /* Free queue structure */
+    /* If q is NULL */
+    /* Do nothing and return */
+    if (!q)
+        return;
+    /* Iterate through elements in queue q with pointer to list_ele_t*/
+    /* For every element, the string pointed by value of the element
+        and the element itself would be freed */
+    list_ele_t *currentEleToFree = q->head, *nextEleToFree;
+    while (currentEleToFree) {
+        nextEleToFree = currentEleToFree->next;
+        free(currentEleToFree->value);
+        free(currentEleToFree);
+        currentEleToFree = nextEleToFree;
+    }
+    /* Free the queue itself */
     free(q);
 }
 
@@ -53,21 +71,30 @@ bool q_insert_head(queue_t *q, char *s)
     /* Make space for length of s plus one `\0` space */
     newh->value = malloc((srcIndex - s + 1) * sizeof(char));
     /* Case 3: newh->value can't be allocated successfully */
-    /* free newh and return false */
+    /* Free newh and return false */
     if (!newh->value) {
         free(newh);
         return false;
     }
+    /* Get beginning of source string and destination string */
     srcIndex = s;
     char *dstIndex = newh->value;
+    /* Copy until terminating character and append a terminating charater at the
+        end of destination string*/
     while (*srcIndex) {
         *dstIndex = *srcIndex;
         dstIndex++;
         srcIndex++;
     }
     *dstIndex = 0;
+    /* Adjust connection of the linked list */
     newh->next = q->head;
     q->head = newh;
+    /* Adjust direct connection to tail */
+    if (!q->tail)
+        q->tail = newh;
+    /* Increase size */
+    q->size++;
     return true;
 }
 
@@ -80,11 +107,49 @@ bool q_insert_head(queue_t *q, char *s)
  */
 bool q_insert_tail(queue_t *q, char *s)
 {
-    /* TODO: You need to write the complete code for this function */
-    /* Remember: It should operate in O(1) time */
-    /* TODO: Remove the above comment when you are about to implement. */
-    bool a = false;
-    return a;
+    /* Case 1: Queue hasn't been created yet */
+    /* Return false directly */
+    if (!q)
+        return false;
+    /* Allocate a element pointer `newt` */
+    list_ele_t *newt = malloc(sizeof(list_ele_t));
+    /* Case 2: newt can't be allocated successfully */
+    /* Return false directly */
+    if (!newt)
+        return false;
+    /* Count length of `s` */
+    char *srcIndex = s;
+    while (*srcIndex)
+        srcIndex++;
+    /* Make space for length of s plus one `\0` space */
+    newt->value = malloc((srcIndex - s + 1) * sizeof(char));
+    /* Case 3: newt->value can't be allocated successfully */
+    /* Free newt and return false */
+    if (!newt->value) {
+        free(newt);
+        return false;
+    }
+    /* Get beginning of source string and destination string */
+    srcIndex = s;
+    char *dstIndex = newt->value;
+    /* Copy until terminating character and append a terminating charater at the
+        end of destination string*/
+    while (*srcIndex) {
+        *dstIndex = *srcIndex;
+        dstIndex++;
+        srcIndex++;
+    }
+    *dstIndex = 0;
+    /* Adjust connection of the liked list */
+    if (!q->head) {
+        q->head = newt;
+    }
+    /* Adjust connection of tail */
+    q->tail->next = newt;
+    q->tail = newt;
+    newt->next = NULL;
+    q->size++;
+    return true;
 }
 
 /*
@@ -97,9 +162,13 @@ bool q_insert_tail(queue_t *q, char *s)
  */
 bool q_remove_head(queue_t *q, char *sp, size_t bufsize)
 {
-    /* TODO: Remove the above comment when you are about to implement. */
+    /* If q is NULL or empty */
+    /* Return false directly */
     if (!q || !q->head)
         return false;
+    /* If sp is pointing to an allocated memory */
+    /* Copy q->head->value to sp up to bufsize - 1 or end of q->head->value,
+        and append a terminating character at the end of sp */
     if (sp) {
         char *srcIndex = q->head->value, *dstBound = sp + bufsize - 1;
         while (*srcIndex && sp < dstBound) {
@@ -107,12 +176,19 @@ bool q_remove_head(queue_t *q, char *sp, size_t bufsize)
             sp++;
             srcIndex++;
         }
-        *sp = '\0';
+        *sp = 0;
     }
-    free(q->head->value);
-    list_ele_t *nodeToRemove = q->head;
+    /* Adjust the connection and get the element to remove */
+    list_ele_t *eleToRemove = q->head;
     q->head = q->head->next;
-    free(nodeToRemove);
+    /* Adjust the address which tail is pointed to */
+    if (q->size < 2)
+        q->tail = q->head;
+    /* Free the space taken by string in the element and the element itself */
+    free(eleToRemove->value);
+    free(eleToRemove);
+    /* Decrease size */
+    q->size--;
     return true;
 }
 
@@ -125,7 +201,7 @@ int q_size(queue_t *q)
     /* TODO: You need to write the code for this function */
     /* Remember: It should operate in O(1) time */
     /* TODO: Remove the above comment when you are about to implement. */
-    return 0;
+    return q->size;
 }
 
 /*
