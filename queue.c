@@ -6,6 +6,12 @@
 #include "queue.h"
 
 /*
+ * Function prototype for merging queue when sorting
+ */
+list_ele_t *sort_List(list_ele_t *);
+list_ele_t *merge_List(list_ele_t *, list_ele_t *);
+
+/*
  * Create empty queue.
  * Return NULL if could not allocate space.
  */
@@ -133,20 +139,24 @@ bool q_insert_tail(queue_t *q, char *s)
     srcPtr = s;
     char *dstPtr = newt->value;
     /* Copy until terminating character and append a terminating charater at the
-        end of destination string*/
+        end of destination string */
     while (*srcPtr) {
         *dstPtr = *srcPtr;
         dstPtr++;
         srcPtr++;
     }
     *dstPtr = 0;
-    /* Adjust connection of the liked list */
+    /* Adjust connection of the liked list in case of empty queue */
     if (!q->head) {
         q->head = newt;
+        q->tail = newt;
+    } else {
+        /* Connect `newt` to `tail` */
+        q->tail->next = newt;
+        /* Make `newt` as `tail` */
+        q->tail = newt;
     }
-    /* Adjust connection of tail */
-    q->tail->next = newt;
-    q->tail = newt;
+    /* Make queue as NULL terminated and increase in size */
     newt->next = NULL;
     q->size++;
     return true;
@@ -229,9 +239,18 @@ void q_reverse(queue_t *q)
     while (prevPtr != q->head) {
         /* prevPtr, opPtr, tmpPtr store previous, current and next elements as
             a sliding window.
-            ...| |->| |->| |...
-            prev↑    ↑    ↑tmpPtr
-                     └opPtr */
+            ...| |  | |->| |...
+         prevPtr↑    ↑    ↑tmpPtr
+                     └opPtr
+            ...| |<-| |  | |...
+         prevPtr↑    ↑    ↑tmpPtr
+                     └opPtr
+            ...| |<-| |  | |->
+              prevPtr↑    ↑tmpPtr/opPtr
+            ...| |<-| |  | |->| |
+              prevPtr↑    ↑    ↑tmpPtr
+                          └opPtr
+        */
         tmpPtr = opPtr->next;
         opPtr->next = prevPtr;
         prevPtr = opPtr;
@@ -246,6 +265,86 @@ void q_reverse(queue_t *q)
  */
 void q_sort(queue_t *q)
 {
+    /* Check for null-pointing pointer or
+        list pointed with only one or zero element */
+    /* Return directly */
     if (!q || q->size < 2)
         return;
+    /* Utilize `sort_List` function to sort head of queue */
+    q->head = sort_List(q->head);
+    /* Iterate through the list to get tail */
+    /* TODO: Check if it's possible to update tail on sorting list */
+    q->tail = q->head;
+    for (int i = 1; i < q->size; i++) {
+        q->tail = q->tail->next;
+    }
+}
+
+list_ele_t *sort_List(list_ele_t *head)
+{
+    /* If head is NULL pointer or the element followed is a NULL pointer */
+    /* Return as base case */
+    if (!head || !head->next)
+        return head;
+    /* Assign two pointers to list_ele_t, slow one to get middle point when
+        fast iterate through whole list */
+    list_ele_t *fast = head->next;
+    list_ele_t *slow = head;
+    while (fast && fast->next) {
+        slow = slow->next;
+        fast = fast->next->next;
+    }
+    /* Pointer fast acts as head of second list,
+        and make tail of first terminated with a NULL pointer as next */
+    fast = slow->next;
+    slow->next = NULL;
+    /* Recursively split list until base case */
+    head = sort_List(head);
+    fast = sort_List(fast);
+    /* Merge the internally sorted two lists */
+    return merge_List(head, fast);
+}
+
+list_ele_t *merge_List(list_ele_t *l1, list_ele_t *l2)
+{
+    /* Declare two pointer to list_ele_t, one for storing head of list,
+        the other for iteration */
+    list_ele_t *newListIndex, *newListHead;
+    /* Get smaller element between first elements on l1 and l2 */
+    if (strcmp(l1->value, l2->value) < 0) {
+        newListIndex = l1;
+        l1 = l1->next;
+    } else {
+        newListIndex = l2;
+        l2 = l2->next;
+    }
+    /* Assign it to the head */
+    newListHead = newListIndex;
+    /* Iterate through l1 and l2 */
+    while (l1 && l2) {
+        /* If first element on l1 is smaller than the one on l2,
+            link it element on l1 to current list and get next element on l1 */
+        if (strcmp(l1->value, l2->value) < 0) {
+            newListIndex->next = l1;
+            newListIndex = newListIndex->next;
+            l1 = l1->next;
+        }
+        /* If first element on l2 is smaller than the one on l1,
+            link it element on l2 to current list and get next element on l2 */
+        else {
+            newListIndex->next = l2;
+            newListIndex = newListIndex->next;
+            l2 = l2->next;
+        }
+    }
+    /* After iteration on l1 and l2, if there is any element left on l1 or l2,
+        link them directly to current list */
+    if (l1) {
+        newListIndex->next = l1;
+    }
+    if (l2) {
+        newListIndex->next = l2;
+    }
+    /* Return head of list */
+    return newListHead;
 }
